@@ -85,7 +85,7 @@ rejected, but the motivating use cases are still valid.
 Rationale
 =========
 
-The current imperative approach to namespace packages has lead to
+The current imperative approach to namespace packages has led to
 multiple slightly-incompatible mechanisms for providing namespace
 packages.  For example, pkgutil supports ``*.pkg`` files; setuptools
 doesn't.  Likewise, setuptools supports inspecting zip files, and
@@ -98,7 +98,7 @@ this configuration, it doesn't matter if multiple portions all provide
 an ``__init__.py`` file, so long as each portion correctly initializes
 the namespace package.  However, Linux distribution vendors (amongst
 others) prefer to combine the separate portions and install them all
-into the *same* filesystem directory.  This creates a potential for
+into the *same* file system directory.  This creates a potential for
 conflict, as the portions are now attempting to provide the *same*
 file on the target system - something that is not allowed by many
 package managers.  Allowing implicit namespace packages means that the
@@ -128,7 +128,9 @@ directory in the parent path:
    imported and returned.
 
  * If not, but ``<directory>/foo.{py,pyc,so,pyd}`` is found, a module
-   is imported and returned.
+   is imported and returned.  The exact list of extension varies by
+   platform and whether the -O flag is specified.  The list here is
+   representative.
 
  * If not, but ``<directory>/foo`` is found and is a directory, it is
    recorded and the scan continues with the next directory in the
@@ -308,13 +310,14 @@ They are:
   2. Implicit package directories pose awkward backwards compatibility
      challenges.
 
-  3. Implicit package directories introduce ambiguity into filesystem
+  3. Implicit package directories introduce ambiguity into file system
      layouts.
 
   4. Implicit package directories will permanently entrench current
      newbie-hostile behavior in ``__main__``.
 
-Nick gave a detailed response [5]_, which is summarized here:
+Nick later gave a detailed response to his own objections[5]_, which
+is summarized here:
 
   1. The practicality of this PEP wins over other proposals and the
      status quo.
