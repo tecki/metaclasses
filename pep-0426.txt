@@ -43,7 +43,7 @@ followed by a blank line and a payload containing a description of the
 distribution.
 
 This format is parseable by the ``email`` module with an appropriate
-``email.policy.Policy()``. When ``metadata`` is a Unicode string,
+``email.policy.Policy()``.  When ``metadata`` is a Unicode string,
 ```email.parser.Parser().parsestr(metadata)`` is a serviceable parser.
 
 There are two standard locations for these metadata files:
@@ -277,11 +277,6 @@ installing this distribution. These strings must be of the form
 ``Name`` or ``Name (Version)``, following the formats of the corresponding
 field definitions.
 
-For ease of metadata consumption, distributions are required to explicitly
-include a ``Provides-Dist`` entry for their own name and version. This also
-allows developers of a project to discourage users explicitly depending on
-the project (by deliberately omitting this entry).
-
 A distribution may provide additional names, e.g. to indicate that
 multiple projects have been merged into and replaced by a single
 distribution or to indicate that this project is a substitute for another.
@@ -388,12 +383,9 @@ Setup-Requires-Dist (multiple use)
 ----------------------------------
 
 Like ``Requires-Dist``, but names dependencies needed in order to build,
-package or install the distribution. Commonly used to bring in extra
-compiler support or a package needed to generate a manifest from
-version control.
-
-Distributions may also depend on optional features of other distributions.
-See `Optional Features`_ for details.
+package or install the distribution -- in distutils, a dependency imported
+by ``setup.py`` itself. Commonly used to bring in extra compiler support
+or a package needed to generate a manifest from version control.
 
 Examples::
 
@@ -555,9 +547,6 @@ Version identifiers must comply with the following scheme::
     N[.N]+[{a|b|c|rc}N][.postN][.devN]
 
 Version identifiers which do not comply with this scheme are an error.
-Projects which wish to use non-compliant version identifiers must restrict
-themselves to metadata v1.1 (PEP 314) or earlier, as those specifications
-do not constrain the versioning scheme.
 
 Any given version will be a "release", "pre-release", "post-release" or
 "developmental release" as defined in the following sections.
@@ -1086,8 +1075,7 @@ Optional features
 
 Distributions may use the ``Provides-Extra`` field to declare additional
 features that they provide. Environment markers may then be used to indicate
-that particular dependencies (as specified in ``Requires-Dist`` or
-``Setup-Requires-Dist``) are needed only when a particular optional
+that particular dependencies are needed only when a particular optional
 feature has been requested.
 
 Other distributions then require an optional feature by placing it
@@ -1095,10 +1083,9 @@ inside square brackets after the distribution name when declaring the
 dependency. Multiple features can be requisted by separating them with a
 comma within the brackets.
 
-The full set of dependency requirements is then the union of the
-sets created by first evaluating the `Requires-Dist` (or
-`Setup-Requires-Dist`) fields with `extra` set to `None` and then to
-the name of each requested feature.
+The full set of dependency requirements is then the union of the sets
+created by first evaluating the `Requires-Dist` fields with `extra`
+set to `None` and then to the name of each requested feature.
 
 Example::
 
@@ -1159,9 +1146,8 @@ Summary of differences from \PEP 345
 * Optional feature mechanism
 
    * the new ``Provides-Extra`` field
-   * ``extra`` expression defined for environment markers.
-   * optional feature support in ``Requires-Dist`` and
-     ``Setup-Requires-Dist``
+   * ``extra`` expression defined for environment markers
+   * optional feature support in ``Requires-Dist``
 
 * Metadata extension mechanism
 
@@ -1413,7 +1399,6 @@ Python 3.3::
     Summary: A package.
     Description: Description
         ===========
-
 
         A description of the package.
 
