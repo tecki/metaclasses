@@ -2,7 +2,7 @@ PEP: 426
 Title: Metadata for Python Software Packages 2.0
 Version: $Revision$
 Last-Modified: $Date$
-Author: Daniel Holth <dholth@fastmail.fm>,
+Author: Daniel Holth <dholth@gmail.com>,
         Donald Stufft <donald@stufft.io>,
         Nick Coghlan <ncoghlan@gmail.com>
 BDFL-Delegate: Nick Coghlan <ncoghlan@gmail.com>
@@ -527,13 +527,22 @@ Extension (multiple use)
 An ASCII string, not containing whitespace or the ``/`` character, that
 indicates the presence of extended metadata. The additional fields
 defined by the extension are then prefixed with the name of the extension
-and the ``/`` character.
+and the ``/`` character. The additional fields are optional (0..1).
 
 For example::
 
     Extension: Chili
     Chili/Type: Poblano
     Chili/Heat: Mild
+    Chili/json: { 
+        "type" : "Poblano", 
+        "heat" : "Mild" }
+
+The special ``{extension name}/json`` permits embedded JSON. It may be
+parsed automatically by a future tool.
+
+Values in extension fields must still respect the general formatting
+requirements for metadata headers.
 
 To avoid name conflicts, it is recommended that distribution names be used
 to identify metadata extensions. This practice will also make it easier to
@@ -542,9 +551,6 @@ find authoritative documentation for metadata extensions.
 As the order of the metadata headers is not constrained, the
 ``Extension: Chili`` field may appear before or after the corresponding
 extension fields ``Chili/Type:`` etc.
-
-Values in extension fields must still respect the general formatting
-requirements for metadata headers.
 
 A bare ``Extension: Name`` entry with no corresponding extension fields is
 permitted. It may, for example, indicate the expected presence of an
@@ -595,9 +601,11 @@ Any given version will be a "release", "pre-release", "post-release" or
 
 .. note::
 
-   Some hard to read version identifiers are permitted by this scheme
-   in order to better accommodate the wide range of versioning practices
-   across existing public and private Python projects.
+   Some hard to read version identifiers are permitted by this scheme in
+   order to better accommodate the wide range of versioning practices
+   across existing public and private Python projects, given the
+   constraint that the package index is not yet sophisticated enough to
+   allow the introduction of a simpler, backwards-incompatible scheme.
 
    Accordingly, some of the versioning practices which are technically
    permitted by the PEP are strongly discouraged for new projects. Where
@@ -1053,17 +1061,17 @@ and ``!=``.
 The ordered comparison operators ``<``, ``>``, ``<=``, ``>=`` are based
 on the consistent ordering defined by the standard `Version scheme`_.
 
-The ``==`` and ``!=`` operators are based on string comparisons - in order
-to match, the version being checked must start with exactly that sequence of
-characters.
+The ``==`` and ``!=`` operators are based on a kind of prefix comparison -
+trailing ``0``s are implied when comparing numeric version parts of different
+lengths. ``1.0 == 1 == 1.0.0``, and ``1.0a1 == ``1.0.0.0a1``.
 
 .. note::
 
-   The use of ``==`` when defining dependencies for published distributions
-   is strongly discouraged, as it greatly complicates the deployment of
-   security fixes (the strict version comparison operator is intended
-   primarily for use when defining dependencies for particular
-   applications while using a shared distribution index).
+   The use of ``==`` when defining dependencies for published
+   distributions is strongly discouraged as it greatly complicates the
+   deployment of security fixes. The strict version comparison operator
+   is intended primarily for use when defining dependencies for repeatable
+   *deployments of applications* while using a shared distribution index.
 
 
 Handling of pre-releases
@@ -1193,14 +1201,15 @@ Optional features
 =================
 
 Distributions may use the ``Provides-Extra`` field to declare additional
-features that they provide. Environment markers may then be used to indicate
+features provided through "extra" dependencies, usually corresponding to a
+``try: import x ...`` block. Environment markers may be used to indicate
 that particular dependencies are needed only when a particular optional
 feature has been requested.
 
-Other distributions then require an optional feature by placing it
-inside square brackets after the distribution name when declaring the
-dependency. Multiple features can be requisted by separating them with a
-comma within the brackets.
+Other distributions require the feature by placing it inside
+square brackets after the distribution name when declaring the
+dependency. Multiple features can be requisted by separating them with
+a comma within the brackets.
 
 The full set of dependency requirements is then the union of the sets
 created by first evaluating the `Requires-Dist` fields with `extra`
@@ -1214,9 +1223,13 @@ Example::
     Setup-Requires-Dist: beaglevote[test, doc]
         -> requires beaglevote, sphinx, nose at setup time
 
-It is legal to specify `Provides-Extra` without referencing it in any
-`Requires-Dist`. It is an error to request a feature name that has
-not been declared with `Provides-Extra`.
+It is an error to request a feature name that has not been declared with
+`Provides-Extra` but it is legal to specify `Provides-Extra` without
+referencing it in any `Requires-Dist`.
+
+In the example, if ``beaglevote`` grew the ability to generate PDF
+without extra dependencies, it should continue to ``Provides-Extra:
+pdf`` for the benefit of dependent distributions.
 
 The following feature names are implicitly defined for all distributions:
 

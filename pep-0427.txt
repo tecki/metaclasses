@@ -2,7 +2,7 @@ PEP: 427
 Title: The Wheel Binary Package Format 1.0
 Version: $Revision$
 Last-Modified: $Date$
-Author: Daniel Holth <dholth@fastmail.fm>
+Author: Daniel Holth <dholth@gmail.com>
 BDFL-Delegate: Nick Coghlan <ncoghlan@gmail.com>
 Discussions-To: <distutils-sig@python.org>
 Status: Accepted
@@ -95,6 +95,9 @@ Rewrite ``#!python``.
     a file in ``scripts/`` starts with exactly ``b'#!python'``, rewrite to
     point to the correct interpreter.  Unix installers may need to add
     the +x bit to these files if the archive was created on Windows.
+
+    The ``b'#!pythonw'`` convention is allowed. ``b'#!pythonw'`` indicates
+    a GUI script instead of a console script.
 
 Generate script wrappers.
     In wheel, scripts packaged on Unix systems will certainly not have
@@ -288,6 +291,8 @@ RECORD as the signature's JSON payload::
 
     { "hash": "sha256=ADD-r2urObZHcxBW3Cr-vDCu5RJwT4CaRTHiFmbcIYY" }
 
+(The hash value is the same format used in RECORD.)
+
 If RECORD.p7s is used, it must contain a detached S/MIME format signature
 of RECORD.
 
@@ -361,6 +366,19 @@ Why does wheel also allow S/MIME signatures?
     Signed packages are only a basic building block in a secure package
     update system.  Wheel only provides the building block.
 
+What's the deal with "purelib" vs. "platlib"?
+    Wheel preserves the historic "purelib" vs. "platlib" distinction
+    even though both map to the same install location in any system the
+    author could find.
+
+    For example, a wheel with "Root-Is-Purelib: false" with all its files
+    in ``{name}-{version}.data/purelib`` is equivalent to a wheel with
+    "Root-Is-Purelib: true" with those same files in the root, and it
+    is legal to have files in both the "purelib" and "platlib" categories.
+
+    In practice a wheel should have only one of "purelib" or "platlib"
+    depending on whether it is pure Python or not and those files should
+    be at the root.
 
 References
 ==========
