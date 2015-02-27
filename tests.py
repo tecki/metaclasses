@@ -6,7 +6,6 @@ class Test(TestCase):
     def test_classes(self):
         # PEP 422: Simple class initialisation hook
         class BaseC(SubclassInit):
-            @classmethod
             def __init_subclass__(cls):
                 cls.x = 0
         class C(BaseC):
@@ -22,7 +21,6 @@ class Test(TestCase):
         self.assertEqual(0, E.__dict__['x'])
         # override:
         class BaseF(C):
-            @classmethod
             def __init_subclass__(cls):
                 cls.y = 1
         class F(BaseF):
@@ -33,7 +31,6 @@ class Test(TestCase):
         self.assertFalse(hasattr(C, 'y'))
         # super:
         class BaseG(C):
-            @classmethod
             def __init_subclass__(cls):
                 super().__init_subclass__()
                 cls.y = 1
@@ -42,18 +39,8 @@ class Test(TestCase):
         self.assertEqual(1, G.y)
         self.assertEqual(0, G.__dict__['x'])
         self.assertFalse(hasattr(C, 'y'))
-        # staticmethod:
-        class BaseH(C):
-            @staticmethod
-            def __init_subclass__():
-                __class__.z = 2
-        class H(BaseH):
-            pass
-        self.assertEqual(2, H.z)
-        self.assertFalse(hasattr(C, 'z'))
         # __class__:
         class BaseI(SubclassInit):
-            @classmethod
             def __init_subclass__(cls):
                 cls.x = 0
                 __class__.y += 1
@@ -67,7 +54,6 @@ class Test(TestCase):
         self.assertEqual(0, J.__dict__['x'])
         self.assertEqual(2, I.y)
         class BaseK(J):
-            @classmethod
             def __init_subclass__(cls):
                 super().__init_subclass__()
                 __class__.z += 1
@@ -80,11 +66,9 @@ class Test(TestCase):
         self.assertFalse(hasattr(J, 'z'))
         # multiple inheritance:
         class L(SubclassInit):
-            @classmethod
             def __init_subclass__(cls):
                 pass
         class BaseM(L):
-            @classmethod
             def __init_subclass__(cls):
                 super().__init_subclass__()
                 cls.x = 0
@@ -92,7 +76,6 @@ class Test(TestCase):
             pass
         self.assertEqual(0, M.x)
         class BaseN(L):
-            @classmethod
             def __init_subclass__(cls):
                 super().__init_subclass__()
                 cls.y = 1
@@ -100,7 +83,6 @@ class Test(TestCase):
             pass
         self.assertEqual(1, N.y)
         class BaseO(M, N):
-            @classmethod
             def __init_subclass__(cls):
                 super().__init_subclass__()
                 cls.z = 2
@@ -119,7 +101,6 @@ class Test(TestCase):
         @dec2
         @dec1
         class P:
-            @classmethod
             def __init_subclass__(cls):
                 cls.x = 0
         self.assertEqual(2, P.x)
@@ -127,7 +108,6 @@ class Test(TestCase):
         S = sentinel = object()
         with self.assertRaisesRegex(KeyError, 'xxx'):
             class BaseS(SubclassInit):
-                @classmethod
                 def __init_subclass__(cls):
                     raise KeyError('xxx')
             class S(BaseS):
@@ -137,7 +117,6 @@ class Test(TestCase):
     def test_types(self):
         # PEP 422: Simple class initialisation hook
         def c(ns):
-            @classmethod
             def __init_subclass__(cls):
                 cls.x = 0
             ns['__init_subclass__'] = __init_subclass__
@@ -154,7 +133,6 @@ class Test(TestCase):
         self.assertEqual(E.__dict__['x'], 0)
         # override:
         def f(ns):
-            @classmethod
             def __init_subclass__(cls):
                 cls.y = 1
             ns['__init_subclass__'] = __init_subclass__
@@ -164,20 +142,8 @@ class Test(TestCase):
         self.assertEqual(F.x, 0)
         self.assertNotIn('x', F.__dict__)
         self.assertFalse(hasattr(C, 'y'))
-        # staticmethod:
-        z = 0
-        def h(ns):
-            @staticmethod
-            def __init_subclass__():
-                nonlocal z
-                z = 2
-            ns['__init_subclass__'] = __init_subclass__
-        BaseH = types.new_class("BaseH", (C,), exec_body=h)
-        H = types.new_class("H", (BaseH,))
-        self.assertEqual(z, 2)
         # __init_subclass__ raises an exception:
         def s(ns):
-            @classmethod
             def __init_subclass__(cls):
                 raise KeyError('xxx')
             ns['__init_subclass__'] = __init_subclass__

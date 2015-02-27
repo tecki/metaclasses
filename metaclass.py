@@ -9,6 +9,9 @@ class Meta(type):
             return super().__prepare__(name, bases, **kwargs)
 
     def __new__(cls, name, bases, dict, **kwargs):
+        method = dict.get("__init_subclass__")
+        if method is not None:
+            dict["__init_subclass__"] = classmethod(method)
         return super(Meta, cls).__new__(cls, name, bases, dict)
 
     def __init__(self, name, bases, dict, namespace=None, **kwargs):
