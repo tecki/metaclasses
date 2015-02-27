@@ -13,6 +13,7 @@ class Meta(type):
         return super(Meta, cls).__new__(cls, name, bases, dict)
 
     def __init__(self, name, bases, dict, namespace=None, **kwargs):
+        super(Meta, self).__init__(name, bases, dict)
         super(self, self).__init_subclass__(**kwargs)
         if namespace is not None:
             self.__namespace__ = namespace
@@ -24,4 +25,3 @@ class Base(object):
         pass
 
 SubclassInit = Meta("SubclassInit", (Base,), {})
-
