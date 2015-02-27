@@ -1,4 +1,4 @@
-from pep422 import SubclassInit, Meta
+from metaclass import SubclassInit, Meta
 from unittest import TestCase, main
 import types
 

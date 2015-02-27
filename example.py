@@ -1,5 +1,5 @@
 
-from pep422 import SubclassInit
+from metaclass import SubclassInit
 
 
 class Registry(SubclassInit):
