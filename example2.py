@@ -7,7 +7,7 @@ class Registry(SubclassInit):
     subclasses = []
 
     def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
+        super(Registry, cls).__init_subclass__(**kwargs)
         Registry.subclasses.append(cls)
 
 
