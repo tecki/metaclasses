@@ -153,30 +153,17 @@ class Test(TestCase):
             S = types.new_class("S", (BaseS,))
         self.assertIs(S, sentinel)
 
-    def test_namespace(self):
-        outer = self
-        class NS(dict):
-            def __init__(self):
-                super().__init__(bar=3)
-            def __setitem__(self, attr, value):
-                if not attr.startswith("__"):
-                    NS.called_set = True
-                    outer.assertEqual(attr, "spam")
-                    outer.assertEqual(value, "ham")
-                super().__setitem__(attr, value)
-            def __getitem__(self, attr):
-                if not attr.startswith("__"):
-                    NS.called_get = True
-                    outer.assertIn(attr, ("outer", "bar"))
-                return super().__getitem__(attr)
-        class Base(SubclassInit, namespace=NS):
-            pass
-        class Class(Base):
-            outer.assertEqual(bar, 3)
-            spam = "ham"
-        self.assertTrue(NS.called_set)
-        self.assertTrue(NS.called_get)
-
+    def test_ordered(self):
+        class BaseA(SubclassInit):
+            def __init_subclass__(cls, ns):
+                cls.order = list(s for s in ns if len(s) == 1)
+        class A(BaseA):
+            a = 1
+            b = 2
+            c = 3
+            d = 4
+            e = 5
+        self.assertEqual("".join(A.order), "abcde")
 
 
 if __name__ == "__main__":
