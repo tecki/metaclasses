@@ -37,6 +37,31 @@ Don't forget to properly call super()! Other classes may want to
 initialize subclasses as well. This is also why you should pass over
 the keyword arguments, just taking out the ones you need.
 
+Initializing Descriptors
+------------------------
+
+Descriptors are a powerful technique to create object attributes which
+calculate their value on-the-fly. A property is a simple example of such
+a descriptor. There is a common problem with those descriptors: they
+do not know their name. Using `SubclassInit` you can add an
+`__init_descriptor__` method to a descriptor which gets called once the
+class is ready and the descriptor's name is known.
+
+As an example, we can define a descriptor which makes an attribute a
+weak reference::
+
+    import weakref
+
+    class WeakAttribute:
+        def __get__(self, instance, owner):
+            return instance.__dict__[self.name]()
+
+        def __set__(self, instance, value):
+            instance.__dict__[self.name] = weakref.ref(value)
+
+        def __init_descriptor__(self, owner, name):
+            self.name = name
+
 Initializing Namespaces
 -----------------------
 
@@ -71,6 +96,9 @@ class Meta(type):
         super(self, self).__init_subclass__(ns, **kwargs)
         if namespace is not None:
             self.__namespace__ = namespace
+        for k, v in ns.items():
+            if hasattr(v, "__init_descriptor__"):
+                v.__init_descriptor__(self, k)
 
 
 class Base(object):
