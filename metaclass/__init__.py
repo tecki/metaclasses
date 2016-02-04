@@ -122,4 +122,4 @@ class Base(object):
         pass
 
 SubclassInit = Meta("SubclassInit", (Base,), {})
-ABCSubclassInit = ABCMeta("ABCSubclassInit", (Base, abc.ABC), {})
+ABCSubclassInit = ABCMeta("ABCSubclassInit", (Base,), {})
