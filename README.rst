@@ -1,4 +1,4 @@
-metaclass -- Writing and using metaclasses
+metaclass - Writing and using metaclasses
 ==========================================
 
 Metaclasses are a very powerful tool in Python. You can control
@@ -15,7 +15,7 @@ Initializing subclasses
 
 A very common usecase for a metaclass is that you just want to execute
 some code after a class is created. This can easily done with
-:class:`SubclassInit`. You just define a method ``__init_subclass__``,
+``SubclassInit``. You just define a method ``__init_subclass__``,
 which is implicitly considered a ``@classmethod`` and
 will be called after each subclass that is generated of your
 class. As a parameter it gets the namespace of the class. An example
@@ -34,7 +34,7 @@ arguments given on the class definition line, as in::
     class Subclass(Base, spam="ham"):
         pass
 
-Don't forget to properly call super()! Other classes may want to
+Don't forget to properly call ``super()``! Other classes may want to
 initialize subclasses as well. This is also why you should pass over
 the keyword arguments, just taking out the ones you need.
 
@@ -44,8 +44,8 @@ Initializing Descriptors
 Descriptors are a powerful technique to create object attributes which
 calculate their value on-the-fly. A property is a simple example of such
 a descriptor. There is a common problem with those descriptors: they
-do not know their name. Using `SubclassInit` you can add an
-`__init_descriptor__` method to a descriptor which gets called once the
+do not know their name. Using ``SubclassInit`` you can add an
+``__init_descriptor__`` method to a descriptor which gets called once the
 class is ready and the descriptor's name is known.
 
 As an example, we can define a descriptor which makes an attribute a
@@ -67,10 +67,10 @@ Order of Attributes
 -------------------
 
 Sometimes one is interested in which order the attributes were defined
-in the class. `SubclassInit` leaves a tuple with all the names of the
+in the class. ``SubclassInit`` leaves a tuple with all the names of the
 attributes in the order they were defined as a class attribute called
-`__attribute_order__`. Note that Python already defines some class
-attributes, like `__module__`, some of which also show up in this
+``__attribute_order__``. Note that Python already defines some class
+attributes, like ``__module__``, some of which also show up in this
 tuple.
 
 As an example::
