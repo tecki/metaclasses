@@ -89,6 +89,10 @@ As an example::
 import abc
 from collections import OrderedDict
 
+
+__all__ = ["Meta", "SubclassInit", "ABCSubclassInit", "ABCMeta"]
+
+
 class Meta(type):
     @classmethod
     def __prepare__(cls, name, bases, **kwargs):
