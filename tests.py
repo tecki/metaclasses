@@ -154,28 +154,13 @@ class Test(TestCase):
         self.assertIs(S, sentinel)
 
     def test_namespace(self):
-        outer = self
-        class NS(dict):
-            def __init__(self):
-                super().__init__(bar=3)
-            def __setitem__(self, attr, value):
-                if not attr.startswith("__"):
-                    NS.called_set = True
-                    outer.assertEqual(attr, "spam")
-                    outer.assertEqual(value, "ham")
-                super().__setitem__(attr, value)
-            def __getitem__(self, attr):
-                if not attr.startswith("__"):
-                    NS.called_get = True
-                    outer.assertIn(attr, ("outer", "bar"))
-                return super().__getitem__(attr)
-        class Base(SubclassInit, namespace=NS):
-            pass
-        class Class(Base):
-            outer.assertEqual(bar, 3)
-            spam = "ham"
-        self.assertTrue(NS.called_set)
-        self.assertTrue(NS.called_get)
+        class Class(SubclassInit):
+            a = 1
+            def b(self):
+                pass
+            c = 3
+        self.assertEqual(Class.__attribute_order__,
+                         ("__module__", "__qualname__", "a", "b", "c"))
 
     def test_descriptor(self):
         class Descriptor:

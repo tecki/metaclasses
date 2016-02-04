@@ -62,40 +62,47 @@ weak reference::
         def __init_descriptor__(self, owner, name):
             self.name = name
 
-Initializing Namespaces
------------------------
+Order of Attributes
+-------------------
 
-Often the namespace is inspected in a subclass initializer. Sometimes
-one would prefer that this is not a simple :class:`dict`, but something
-more advanced. An :class:`collections.OrderedDict` comes to mind if one
-is interested in the order things were defined in a class. This
-can be achieved with the ``namespace`` keyword argument to the class
-definition::
+Sometimes one is interested in which order the attributes were defined
+in the class. `SubclassInit` leaves a tuple with all the names of the
+attributes in the order they were defined as a class attribute called
+`__attribute_order__`. Note that Python already defines some class
+attributes, like `__module__`, some of which also show up in this
+tuple.
 
-    class Register(SubclassInit, namespace=collections.OrderedDict):
-        pass
+As an example::
 
-Remember that the namespace holds for the subclasses, not the class itself!
+    class AttributeOrder(SubclassInit):
+        a = 1
+
+        def b(self):
+            pass
+
+        c = 5
+
+    assert AttributeOrder.__attribute_order__ == \
+        ('__module__', '__qualname__', 'a', 'b', 'c')
 """
+
+from collections import OrderedDict
+
 class Meta(type):
     @classmethod
-    def __prepare__(cls, name, bases, namespace=None, **kwargs):
-        for b in bases:
-            if isinstance(b, Meta) and hasattr(b, "__namespace__"):
-                return b.__namespace__()
-        return super().__prepare__(name, bases, **kwargs)
+    def __prepare__(cls, name, bases, **kwargs):
+        return OrderedDict()
 
     def __new__(cls, name, bases, ns, **kwargs):
         method = ns.get("__init_subclass__")
         if method is not None:
             ns["__init_subclass__"] = classmethod(method)
+        ns["__attribute_order__"] = tuple(ns.keys())
         return super(Meta, cls).__new__(cls, name, bases, ns)
 
-    def __init__(self, name, bases, ns, namespace=None, **kwargs):
+    def __init__(self, name, bases, ns, **kwargs):
         super(Meta, self).__init__(name, bases, ns)
         super(self, self).__init_subclass__(ns, **kwargs)
-        if namespace is not None:
-            self.__namespace__ = namespace
         for k, v in ns.items():
             if hasattr(v, "__init_descriptor__"):
                 v.__init_descriptor__(self, k)
