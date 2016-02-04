@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="metaclass",
-    version="1.0",
+    version="1.2",
     description="Useful baseclasses for metaclasses",
     url="https://github.com/tecki/metaclasses",
     author="Martin Teichmann",
