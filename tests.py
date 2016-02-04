@@ -177,6 +177,21 @@ class Test(TestCase):
         self.assertTrue(NS.called_set)
         self.assertTrue(NS.called_get)
 
+    def test_descriptor(self):
+        class Descriptor:
+            def __init_descriptor__(self, owner, name):
+                self.name = name
+                self.owner = owner
+
+        class NoDescriptor:
+            pass
+
+        class Class(SubclassInit):
+            d = Descriptor()
+            nd = NoDescriptor()
+
+        self.assertEqual(Class.d.name, "d")
+        self.assertIs(Class.d.owner, Class)
 
 
 if __name__ == "__main__":
