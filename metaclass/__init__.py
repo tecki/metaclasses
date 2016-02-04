@@ -7,7 +7,9 @@ the entire class creation process with them.
 
 Most of the time, however, they are too powerful. This module helps
 you to use some of the advantages of metaclasses, without having
-to know all the details.
+to know all the details. It defines a base class `SubclassInit`.
+Inheriting from this class one can modify the subclass creation
+process.
 
 Initializing subclasses
 -----------------------
