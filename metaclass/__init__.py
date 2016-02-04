@@ -86,6 +86,7 @@ As an example::
         ('__module__', '__qualname__', 'a', 'b', 'c')
 """
 
+import abc
 from collections import OrderedDict
 
 class Meta(type):
@@ -108,9 +109,13 @@ class Meta(type):
                 v.__init_descriptor__(self, k)
 
 
+class ABCMeta(Meta, abc.ABCMeta):
+    pass
+
 class Base(object):
     @classmethod
     def __init_subclass__(cls, ns, **kwargs):
         pass
 
 SubclassInit = Meta("SubclassInit", (Base,), {})
+ABCSubclassInit = ABCMeta("ABCSubclassInit", (Base, abc.ABC), {})

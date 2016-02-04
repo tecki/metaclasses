@@ -1,4 +1,5 @@
-from metaclass import SubclassInit, Meta
+import abc
+from metaclass import ABCSubclassInit, SubclassInit, Meta
 from unittest import TestCase, main
 import types
 
@@ -177,6 +178,23 @@ class Test(TestCase):
 
         self.assertEqual(Class.d.name, "d")
         self.assertIs(Class.d.owner, Class)
+
+    def test_abc(self):
+        class Base(abc.ABC):
+            @abc.abstractmethod
+            def f(self):
+                pass
+
+        class Incomplete(Base, ABCSubclassInit):
+            pass
+
+        class Complete(Incomplete):
+            def f(self):
+                pass
+
+        with self.assertRaises(TypeError):
+            a = Incomplete()
+        b = Complete()
 
 
 if __name__ == "__main__":
