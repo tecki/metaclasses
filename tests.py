@@ -154,6 +154,26 @@ class Test(TestCase):
             S = types.new_class("S", (BaseS,))
         self.assertIs(S, sentinel)
 
+    def test_args(self):
+        with self.assertRaises(TypeError):
+            class C(SubclassInit, some_arg=4):
+                pass
+
+        class Base(SubclassInit):
+            def __init_subclass__(cls, some_arg, **kwargs):
+                super().__init_subclass__(**kwargs)
+                cls.store_arg = some_arg
+
+        class A(Base, some_arg=3):
+            pass
+
+        self.assertEqual(A.store_arg, 3)
+
+        with self.assertRaises(TypeError):
+            class B(Base):
+                pass
+
+
     def test_namespace(self):
         class Class(SubclassInit):
             a = 1

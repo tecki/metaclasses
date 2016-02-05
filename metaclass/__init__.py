@@ -118,10 +118,12 @@ class Meta(type):
 class ABCMeta(Meta, abc.ABCMeta):
     pass
 
+
 class Base(object):
     @classmethod
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls):
         pass
+
 
 SubclassInit = Meta("SubclassInit", (Base,), {})
 ABCSubclassInit = ABCMeta("ABCSubclassInit", (Base,), {})
