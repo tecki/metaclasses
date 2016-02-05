@@ -25,8 +25,8 @@ is a simple subclass registration::
     class Register(SubclassInit):
         subclasses = []
 
-        def __subclass_init__(cls, ns, **kwargs):
-            super().__subclass_init__(ns, **kwargs)
+        def __subclass_init__(cls, **kwargs):
+            super().__subclass_init__(**kwargs)
             Register.subclasses.append(cls)
 
 Note how you can add keyword arguments. Those are the keyword
@@ -109,7 +109,7 @@ class Meta(type):
 
     def __init__(self, name, bases, ns, **kwargs):
         super(Meta, self).__init__(name, bases, ns)
-        super(self, self).__init_subclass__(ns, **kwargs)
+        super(self, self).__init_subclass__(**kwargs)
         for k, v in ns.items():
             if hasattr(v, "__init_descriptor__"):
                 v.__init_descriptor__(self, k)
@@ -120,7 +120,7 @@ class ABCMeta(Meta, abc.ABCMeta):
 
 class Base(object):
     @classmethod
-    def __init_subclass__(cls, ns, **kwargs):
+    def __init_subclass__(cls, **kwargs):
         pass
 
 SubclassInit = Meta("SubclassInit", (Base,), {})
