@@ -21,7 +21,7 @@ creating the potential for spurious metaclass conflicts.
 
 This PEP proposes to instead support a wide range of customisation
 scenarios through a new ``__init_subclass__`` hook in the class body,
-a hook to initialize descriptors, and a way to keep the order in which
+a hook to initialize attributes, and a way to keep the order in which
 attributes are defined.
 
 Those hooks should at first be defined in a metaclass in the standard
@@ -61,38 +61,38 @@ keeping the order in which class attributes were defined.
 Those three use cases can easily be performed by just one metaclass. If
 this metaclass is put into the standard library, and all libraries that
 wish to customize class creation use this very metaclass, no combination
-of metaclasses is necessary anymore.
+of metaclasses is necessary anymore. Said metaclass should live in the
+``types`` module under the name ``Type``. This should hint the user that
+in the future, this metaclass may become the default metaclass ``type``.
 
 The three use cases are achieved as follows:
 
 1. The metaclass contains an ``__init_subclass__`` hook that initializes
    all subclasses of a given class,
-2. the metaclass calls an ``__init_descriptor__`` hook for all descriptors
-   defined in the class, and
+2. the metaclass calls a ``__set_owner__`` hook on all the attribute
+   (descriptors) defined in the class, and
 3. an ``__attribute_order__`` tuple is left in the class in order to inspect
    the order in which attributes were defined.
 
-For ease of use, a base class ``SubclassInit`` is defined, which uses said
+For ease of use, a base class ``types.Object`` is defined, which uses said
 metaclass and contains an empty stub for the hook described for use case 1.
+It will eventually become the new replacement for the standard ``object``.
 
 As an example, the first use case looks as follows::
 
-   class SpamBase(SubclassInit):
-       # this is implicitly a @classmethod
-       def __init_subclass__(cls, **kwargs):
-           # This is invoked after a subclass is created, but before
-           # explicit decorators are called.
-           # The usual super() mechanisms are used to correctly support
-           # multiple inheritance.
-           # **kwargs are the keyword arguments to the subclasses'
-           # class creation statement
-           super().__init_subclass__(cls, **kwargs)
+   >>> class SpamBase(types.Object):
+   ...    # this is implicitly a @classmethod
+   ...    def __init_subclass__(cls, **kwargs):
+   ...        cls.class_args = kwargs
+   ...        super().__init_subclass__(cls, **kwargs)
 
-   class Spam(SpamBase):
-       pass
-   # the new hook is called on Spam
+   >>> class Spam(SpamBase, a=1, b="b"):
+   ...    pass
 
-The base class ``SubclassInit`` contains an empty ``__init_subclass__``
+   >>> Spam.class_args
+   {'a': 1, 'b': 'b'}
+
+The base class ``types.Object`` contains an empty ``__init_subclass__``
 method which serves as an endpoint for cooperative multiple inheritance.
 Note that this method has no keyword arguments, meaning that all
 methods which are more specialized have to process all keyword
@@ -104,8 +104,9 @@ similar mechanism has long been supported by `Zope's ExtensionClass`_),
 but the situation has changed sufficiently in recent years that
 the idea is worth reconsidering for inclusion.
 
-The second part of the proposal adds an ``__init_descriptor__``
-initializer for descriptors.  Descriptors are defined in the body of a
+The second part of the proposal adds an ``__set_owner__``
+initializer for class attributes, especially if they are descriptors.
+Descriptors are defined in the body of a
 class, but they do not know anything about that class, they do not
 even know the name they are accessed with. They do get to know their
 owner once ``__get__`` is called, but still they do not know their
@@ -118,7 +119,7 @@ the first part of the proposal, it makes sense to have one solution
 for this problem for everyone.
 
 To give an example of its usage, imagine a descriptor representing weak
-referenced values (this is an insanely simplified, yet working example)::
+referenced values:
 
     import weakref
 
@@ -130,14 +131,25 @@ referenced values (this is an insanely simplified, yet working example)::
             instance.__dict__[self.name] = weakref.ref(value)
 
         # this is the new initializer:
-        def __init_descriptor__(self, owner, name):
+        def __set_owner__(self, owner, name):
             self.name = name
+
+While this example looks very trivial, it should be noted that until
+now such an attribute cannot be defined without the use of a metaclass.
+And given that such a metaclass can make life very hard, this kind of
+attribute does not exist yet.
 
 The third part of the proposal is to leave a tuple called
 ``__attribute_order__`` in the class that contains the order in which
 the attributes were defined. This is a very common usecase, many
 libraries use an ``OrderedDict`` to store this order. This is a very
 simple way to achieve the same goal.
+
+Under the hood, the implementation *does* ``__prepare__`` an
+``OrderedDict`` namespace, it just retains the order of the keys in
+``__attribute_order__``, since ``type.__new__`` will cripple the
+``OrderedDict`` into a normal ``dict``, discarding the order
+information.
 
 
 Key Benefits
@@ -188,8 +200,8 @@ The only drawback of such a metaclass are the mentioned problems with
 metaclasses and multiple inheritance. Two classes using such a
 metaclass can only be combined, if they use exactly the same such
 metaclass. This fact calls for the inclusion of such a class into the
-standard library, let's call it ``SubclassMeta``, with the base class
-using it called ``SubclassInit``. Once all users use this standard
+standard library, as ``types.Type``, with a ``types.Object`` base class
+using it. Once all users use this standard
 library metaclass, classes from different packages can easily be
 combined.
 
@@ -205,21 +217,24 @@ the proposed functionality into Python:
 
 1. The metaclass implementing this proposal is put onto PyPI, so that
    it can be used and scrutinized.
-2. Once the code is properly mature, it can be added to the Python
-   standard library. There should be a new module called
-   ``metaclass`` which collects tools for metaclass authors, as well
-   as a documentation of the best practices of how to write
-   metaclasses.
-3. If the need of combining this metaclass with other metaclasses is
-   strong enough, it may be included into Python itself.
+2. Introduce this class into the Python 3.6 standard library.
+3. Consider this as the default behavior for Python 3.7.
+
+Steps 2 and 3 would be similar to how the ``set`` datatype was first
+introduced as ``sets.Set``, and only later made a builtin type (with a
+slightly different API) based on wider experiences with the ``sets``
+module.
 
 While the metaclass is still in the standard library and not in the
 language, it may still clash with other metaclasses.  The most
 prominent metaclass in use is probably ABCMeta.  It is also a
 particularly good example for the need of combining metaclasses. For
 users who want to define a ABC with subclass initialization, we should
-support a ``ABCSubclassInit`` class, or let ABCMeta inherit from this
-PEP's metaclass.
+support a ``types.ABCMeta`` class, or let ``abc.ABCMeta`` inherit from this
+PEP's metaclass. As it turns out, most of the behavior of ``abc.ABCMeta``
+can be done achieved with our ``types.Type``, except its core behavior,
+``__instancecheck__`` and ``__subclasscheck__`` which can be supplied,
+as per the definition of the Python language, exclusively in a metaclass.
 
 Extensions written in C or C++ also often define their own metaclass.
 It would be very useful if those could also inherit from the metaclass
@@ -238,14 +253,16 @@ Subclass registration
 Especially when writing a plugin system, one likes to register new
 subclasses of a plugin baseclass. This can be done as follows::
 
-   class PluginBase(SubclassInit):
+   class PluginBase(Object):
        subclasses = []
 
        def __init_subclass__(cls, **kwargs):
            super().__init_subclass__(**kwargs)
            cls.subclasses.append(cls)
 
-One should note that this also works nicely as a mixin class.
+In this example, ``PluginBase.subclasses`` will contain a plain list of all
+subclasses in the entire inheritance tree.  One should note that this also
+works nicely as a mixin class.
 
 Trait descriptors
 -----------------
@@ -262,13 +279,8 @@ PEP::
        def __set__(self, instance, value):
            instance.__dict__[self.key] = value
 
-       def __init_descriptor__(self, owner, name):
+       def __set_owner__(self, owner, name):
            self.key = name
-
-   class Int(Trait):
-       def __set__(self, instance, value):
-           # some boundary check code here
-           super().__set__(instance, value)
 
 
 Rejected Design Options
@@ -294,6 +306,11 @@ complete class on its own.
 The original proposal also made major changes in the class
 initialization process, rendering it impossible to back-port the
 proposal to older Python versions.
+
+More importantly, having a pure Python implementation allows us to
+take two preliminary steps before before we actually change the
+interpreter, giving us the chance to iron out all possible wrinkles
+in the API.
 
 
 Other variants of calling the hook
@@ -358,10 +375,10 @@ of much harder implementation and undesired side effects.
 History
 =======
 
-This used to be a competing proposal to PEP 422 by Nick Coughlan and
-Daniel Urban. It shares both most of the PEP text and proposed code, but
-has major differences in how to achieve its goals. In the meantime, PEP 422
-has been withdrawn favouring this approach.
+This used to be a competing proposal to PEP 422 by Nick Coghlan and Daniel
+Urban. PEP 422 intended to achieve the same goals as this PEP, but with a
+different way of implementation.  In the meantime, PEP 422 has been withdrawn
+favouring this approach.
 
 References
 ==========
