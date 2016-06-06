@@ -185,7 +185,7 @@ class Test(TestCase):
 
     def test_descriptor(self):
         class Descriptor:
-            def __init_descriptor__(self, owner, name):
+            def __set_owner__(self, owner, name):
                 self.name = name
                 self.owner = owner
 

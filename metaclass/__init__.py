@@ -46,7 +46,7 @@ Descriptors are a powerful technique to create object attributes which
 calculate their value on-the-fly. A property is a simple example of such
 a descriptor. There is a common problem with those descriptors: they
 do not know their name. Using `Object` you can add an
-`__init_descriptor__` method to a descriptor which gets called once the
+`__set_owner__` method to a descriptor which gets called once the
 class is ready and the descriptor's name is known.
 
 As an example, we can define a descriptor which makes an attribute a
@@ -61,7 +61,7 @@ weak reference::
         def __set__(self, instance, value):
             instance.__dict__[self.name] = weakref.ref(value)
 
-        def __init_descriptor__(self, owner, name):
+        def __set_owner__(self, owner, name):
             self.name = name
 
 Order of Attributes
@@ -112,8 +112,8 @@ class Type(type):
     def __init__(self, name, bases, ns, **kwargs):
         super(Type, self).__init__(name, bases, ns)
         for k, v in ns.items():
-            if hasattr(v, "__init_descriptor__"):
-                v.__init_descriptor__(self, k)
+            if hasattr(v, "__set_owner__"):
+                v.__set_owner__(self, k)
 
 
 class ABCMeta(Type, abc.ABCMeta):
