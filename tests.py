@@ -1,12 +1,12 @@
 import abc
-from metaclass import ABCSubclassInit, SubclassInit, Meta
+from metaclass import ABC, Object, Type
 from unittest import TestCase, main
 import types
 
 class Test(TestCase):
     def test_classes(self):
         # PEP 422: Simple class initialisation hook
-        class BaseC(SubclassInit):
+        class BaseC(Object):
             def __init_subclass__(cls):
                 cls.x = 0
         class C(BaseC):
@@ -41,7 +41,7 @@ class Test(TestCase):
         self.assertEqual(0, G.__dict__['x'])
         self.assertFalse(hasattr(C, 'y'))
         # __class__:
-        class BaseI(SubclassInit):
+        class BaseI(Object):
             def __init_subclass__(cls):
                 cls.x = 0
                 __class__.y += 1
@@ -66,7 +66,7 @@ class Test(TestCase):
         self.assertEqual(1, K.z)
         self.assertFalse(hasattr(J, 'z'))
         # multiple inheritance:
-        class L(SubclassInit):
+        class L(Object):
             def __init_subclass__(cls):
                 pass
         class BaseM(L):
@@ -108,7 +108,7 @@ class Test(TestCase):
         # __init_subclass__ raises an exception:
         S = sentinel = object()
         with self.assertRaisesRegex(KeyError, 'xxx'):
-            class BaseS(SubclassInit):
+            class BaseS(Object):
                 def __init_subclass__(cls):
                     raise KeyError('xxx')
             class S(BaseS):
@@ -121,7 +121,7 @@ class Test(TestCase):
             def __init_subclass__(cls):
                 cls.x = 0
             ns['__init_subclass__'] = __init_subclass__
-        BaseC = types.new_class("BaseC", (SubclassInit,), exec_body=c)
+        BaseC = types.new_class("BaseC", (Object,), exec_body=c)
         C = types.new_class("C", (BaseC,))
         self.assertEqual(C.x, 0)
         # inherited:
@@ -150,16 +150,16 @@ class Test(TestCase):
             ns['__init_subclass__'] = __init_subclass__
         S = sentinel = object()
         with self.assertRaisesRegex(KeyError, 'xxx'):
-            BaseS = types.new_class("BaseS", (SubclassInit,), exec_body=s)
+            BaseS = types.new_class("BaseS", (Object,), exec_body=s)
             S = types.new_class("S", (BaseS,))
         self.assertIs(S, sentinel)
 
     def test_args(self):
         with self.assertRaises(TypeError):
-            class C(SubclassInit, some_arg=4):
+            class C(Object, some_arg=4):
                 pass
 
-        class Base(SubclassInit):
+        class Base(Object):
             def __init_subclass__(cls, some_arg, **kwargs):
                 super().__init_subclass__(**kwargs)
                 cls.store_arg = some_arg
@@ -175,7 +175,7 @@ class Test(TestCase):
 
 
     def test_namespace(self):
-        class Class(SubclassInit):
+        class Class(Object):
             a = 1
             def b(self):
                 pass
@@ -192,7 +192,7 @@ class Test(TestCase):
         class NoDescriptor:
             pass
 
-        class Class(SubclassInit):
+        class Class(Object):
             d = Descriptor()
             nd = NoDescriptor()
 
@@ -205,7 +205,7 @@ class Test(TestCase):
             def f(self):
                 pass
 
-        class Incomplete(Base, ABCSubclassInit):
+        class Incomplete(Base, ABC):
             pass
 
         class Complete(Incomplete):
