@@ -7,7 +7,7 @@ the entire class creation process with them.
 
 Most of the time, however, they are too powerful. This module helps
 you to use some of the advantages of metaclasses, without having
-to know all the details. It defines a base class `SubclassInit`.
+to know all the details. It defines a base class `Object`.
 Inheriting from this class one can modify the subclass creation
 process.
 
@@ -16,13 +16,13 @@ Initializing subclasses
 
 A very common usecase for a metaclass is that you just want to execute
 some code after a class is created. This can easily done with
-:class:`SubclassInit`. You just define a method ``__init_subclass__``,
+:class:`Object`. You just define a method ``__init_subclass__``,
 which is implicitly considered a ``@classmethod`` and
 will be called after each subclass that is generated of your
 class. As a parameter it gets the namespace of the class. An example
 is a simple subclass registration::
 
-    class Register(SubclassInit):
+    class Register(Object):
         subclasses = []
 
         def __subclass_init__(cls, **kwargs):
@@ -45,7 +45,7 @@ Initializing Descriptors
 Descriptors are a powerful technique to create object attributes which
 calculate their value on-the-fly. A property is a simple example of such
 a descriptor. There is a common problem with those descriptors: they
-do not know their name. Using `SubclassInit` you can add an
+do not know their name. Using `Object` you can add an
 `__init_descriptor__` method to a descriptor which gets called once the
 class is ready and the descriptor's name is known.
 
@@ -68,7 +68,7 @@ Order of Attributes
 -------------------
 
 Sometimes one is interested in which order the attributes were defined
-in the class. `SubclassInit` leaves a tuple with all the names of the
+in the class. `Object` leaves a tuple with all the names of the
 attributes in the order they were defined as a class attribute called
 `__attribute_order__`. Note that Python already defines some class
 attributes, like `__module__`, some of which also show up in this
@@ -76,7 +76,7 @@ tuple.
 
 As an example::
 
-    class AttributeOrder(SubclassInit):
+    class AttributeOrder(Object):
         a = 1
 
         def b(self):
@@ -92,10 +92,10 @@ import abc
 from collections import OrderedDict
 
 
-__all__ = ["Meta", "SubclassInit", "ABCSubclassInit", "ABCMeta"]
+__all__ = ["Type", "Object", "ABC", "ABCMeta"]
 
 
-class Meta(type):
+class Type(type):
     @classmethod
     def __prepare__(cls, name, bases, **kwargs):
         return OrderedDict()
@@ -105,17 +105,17 @@ class Meta(type):
         if method is not None:
             ns["__init_subclass__"] = classmethod(method)
         ns["__attribute_order__"] = tuple(ns.keys())
-        return super(Meta, cls).__new__(cls, name, bases, ns)
+        return super(Type, cls).__new__(cls, name, bases, ns)
 
     def __init__(self, name, bases, ns, **kwargs):
-        super(Meta, self).__init__(name, bases, ns)
+        super(Type, self).__init__(name, bases, ns)
         super(self, self).__init_subclass__(**kwargs)
         for k, v in ns.items():
             if hasattr(v, "__init_descriptor__"):
                 v.__init_descriptor__(self, k)
 
 
-class ABCMeta(Meta, abc.ABCMeta):
+class ABCMeta(Type, abc.ABCMeta):
     pass
 
 
@@ -125,5 +125,5 @@ class Base(object):
         pass
 
 
-SubclassInit = Meta("SubclassInit", (Base,), {})
-ABCSubclassInit = ABCMeta("ABCSubclassInit", (Base,), {})
+Object = Type("Object", (Base,), {})
+ABC = ABCMeta("ABC", (Base,), {})
